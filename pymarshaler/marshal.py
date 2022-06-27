@@ -98,14 +98,15 @@ def _default(o):
 
 class Marshal:
 
-    def __init__(self, ignore_unknown_fields: bool = False, walk_unknown_fields: bool = False):
+    def __init__(self, ignore_unknown_fields: bool = False, walk_unknown_fields: bool = False, resolve_enums_by: str = 'value'):
         if walk_unknown_fields and ignore_unknown_fields is False:
             raise PymarshalError('If walk_unknown_fields is True, ignore_unknown_fields must also be True')
 
         self._arg_builder_factory = _Resolver(
             self._apply_typing,
             ignore_unknown_fields,
-            walk_unknown_fields
+            walk_unknown_fields,
+            resolve_enums_by=resolve_enums_by
         )
 
     @staticmethod
