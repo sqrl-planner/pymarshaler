@@ -4,7 +4,14 @@ from pymarshaler.errors import UnknownFieldError
 from pymarshaler.utils import get_init_params
 
 
-def enum_delegate(cls, data, ignore_func):
+def enum_by_name_delegate(cls, data, ignore_func):
+    for v in cls.__members__.values():
+        if v.name == data:
+            return v
+    raise UnknownFieldError(f'No enum member with name {data} for enum {cls.__name__}')
+
+
+def enum_by_value_delegate(cls, data, ignore_func):
     for v in cls.__members__.values():
         if v.value == data:
             return v

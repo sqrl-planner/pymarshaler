@@ -5,8 +5,9 @@ from enum import Enum
 
 import orjson
 
-from pymarshaler.arg_delegates import enum_delegate, \
-    user_defined_delegate, datetime_delegate, builtin_delegate, list_delegate, tuple_delegate, dict_delegate
+from pymarshaler.arg_delegates import enum_by_name_delegate,\
+    enum_by_value_delegate, user_defined_delegate, datetime_delegate,\
+    builtin_delegate, list_delegate, tuple_delegate, dict_delegate
 from pymarshaler.errors import MissingFieldsError, InvalidDelegateError, PymarshalError
 from pymarshaler.utils import is_builtin, is_user_defined
 
@@ -31,7 +32,8 @@ class _RegisteredDelegates:
 
 class _Resolver:
 
-    def __init__(self, func, ignore_unknown_fields: bool, walk_unknown_fields: bool, set_delegate=None):
+    def __init__(self, func, ignore_unknown_fields: bool, walk_unknown_fields: bool, set_delegate=None,
+                 resolve_enums_by: str = 'value'):
         self._func = func
         self.ignore_unknown_fields = ignore_unknown_fields
         self.walk_unknown_fields = walk_unknown_fields
@@ -45,6 +47,13 @@ class _Resolver:
             "UserDefined": user_defined_delegate,
             "DateTime": datetime_delegate
         }
+
+        assert resolve_enums_by in {'name', 'value'},\
+            'resolve_enums_by must be one of "name" or "value"'
+        if resolve_enums_by == 'name':
+            self._enum_delegate = enum_by_name_delegate
+        else:
+            self._enum_delegate = enum_by_value_delegate
 
     def register(self, cls, func):
         self._registered_delegates.register(cls, func)
@@ -60,7 +69,7 @@ class _Resolver:
             if delegate_maybe:
                 return delegate_maybe(data)
             elif issubclass(cls, Enum):
-                return enum_delegate(cls, data, None)
+                return self._enum_delegate(cls, data, None)
             elif is_user_defined(cls):
                 return user_defined_delegate(cls,
                                              data,
